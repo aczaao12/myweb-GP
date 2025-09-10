@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Gemini CLI Web Proxy",
+  "description": "An intelligent web interface that preprocesses natural language prompts for the Gemini CLI and provides user-friendly explanations for AI-generated errors.",
+  "requestFramePermissions": []
+}
