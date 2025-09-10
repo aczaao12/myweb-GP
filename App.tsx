@@ -14,6 +14,7 @@ import { initializeFirebase } from './firebase';
 import { useAuth } from './hooks/useAuth';
 
 type View = 'chat' | 'settings' | 'docs';
+type WorkerStatus = 'unknown' | 'connecting' | 'connected' | 'error';
 
 const App: React.FC = () => {
   const { settings } = useSettings();
@@ -24,6 +25,7 @@ const App: React.FC = () => {
   const [activeTaskType, setActiveTaskType] = useState<TaskType>(TASK_TYPES[0].value);
   const [activeView, setActiveView] = useState<View>('chat');
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+  const [workerStatus, setWorkerStatus] = useState<WorkerStatus>('unknown');
 
   useEffect(() => {
     if (settings.firebaseConfig) {
@@ -35,6 +37,32 @@ const App: React.FC = () => {
   }, [settings.firebaseConfig]);
 
   const { user } = useAuth(isFirebaseReady);
+
+  useEffect(() => {
+    const checkWorkerConnection = async () => {
+      if (!settings.workerUrl) {
+        setWorkerStatus('unknown');
+        return;
+      }
+
+      setWorkerStatus('connecting');
+      try {
+        // The worker is configured to handle OPTIONS requests for CORS preflight.
+        // A successful preflight check is a good indicator of connectivity.
+        const response = await fetch(settings.workerUrl, { method: 'OPTIONS' });
+        if (response.ok) {
+          setWorkerStatus('connected');
+        } else {
+          setWorkerStatus('error');
+        }
+      } catch (error) {
+        console.error('Worker connection check failed:', error);
+        setWorkerStatus('error');
+      }
+    };
+
+    checkWorkerConnection();
+  }, [settings.workerUrl]);
 
   useEffect(() => {
     if (!user) return;
@@ -69,6 +97,11 @@ const App: React.FC = () => {
         alert("URL Cloudflare Worker chưa được cấu hình. Vui lòng kiểm tra trang Cài đặt.");
         return;
     }
+    if (workerStatus !== 'connected') {
+        alert("Không thể kết nối đến Worker. Vui lòng kiểm tra URL trong Cài đặt và đảm bảo Worker đang hoạt động.");
+        return;
+    }
+
 
     setIsLoading(true);
     setIsStreaming(true);
@@ -140,7 +173,7 @@ const App: React.FC = () => {
       },
     });
 
-  }, [isFirebaseReady, user, settings.workerUrl]);
+  }, [isFirebaseReady, user, settings.workerUrl, workerStatus]);
 
   const handleSelectHistory = (item: HistoryItem) => {
     setActiveConversationId(item.id);
@@ -161,6 +194,7 @@ const App: React.FC = () => {
             <Header 
               onOpenSettings={() => setActiveView('settings')} 
               onOpenDocs={() => setActiveView('docs')}
+              workerStatus={workerStatus}
             />
             <div className="flex flex-1 overflow-hidden">
               <aside className="w-1/4 max-w-xs bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 overflow-y-auto hidden md:block">

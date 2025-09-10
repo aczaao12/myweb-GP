@@ -2,18 +2,25 @@ import React from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { SettingsIcon } from './icons/SettingsIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
+import { StatusIndicator } from './StatusIndicator';
+
+type WorkerStatus = 'unknown' | 'connecting' | 'connected' | 'error';
 
 interface HeaderProps {
     onOpenSettings: () => void;
     onOpenDocs: () => void;
+    workerStatus: WorkerStatus;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDocs }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDocs, workerStatus }) => {
   return (
     <header className="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-      <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-        <span className="text-primary-600 dark:text-primary-400">Gemini</span> AI Proxy
-      </h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+          <span className="text-primary-600 dark:text-primary-400">Gemini</span> AI Proxy
+        </h1>
+        <StatusIndicator status={workerStatus} />
+      </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
         <button
